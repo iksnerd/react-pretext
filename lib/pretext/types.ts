@@ -1,4 +1,4 @@
-import type { PreparedTextWithSegments, LayoutLine } from "@chenglou/pretext";
+import type { PreparedTextWithSegments } from "@chenglou/pretext";
 
 export type FontSpec = string;
 

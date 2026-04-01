@@ -30,7 +30,6 @@ function findBalancedWidth(text: string, font: string, maxWidth: number, lineHei
 export function BalancedHero() {
   const containerRef = useRef<HTMLDivElement>(null);
   const [containerWidth, setContainerWidth] = useState(0);
-  const [showBalanced, setShowBalanced] = useState(true);
 
   useEffect(() => {
     const el = containerRef.current;

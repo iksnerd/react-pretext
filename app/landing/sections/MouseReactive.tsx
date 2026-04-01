@@ -30,57 +30,60 @@ export function MouseReactive() {
 
   const { lines, height } = useTextLines(TEXT, FONT, width, LINE_HEIGHT);
 
-  const animate = useCallback(() => {
-    const container = containerRef.current;
-    if (!container) return;
-    const rect = container.getBoundingClientRect();
-    const { x: mx, y: my, active } = mouseRef.current;
-
-    lineRefs.current.forEach((el, i) => {
-      if (!el) return;
-      const lineCenterY = rect.top + i * LINE_HEIGHT + LINE_HEIGHT / 2;
-      const lineCenterX = rect.left + rect.width / 2;
-
-      if (!active) {
-        el.style.transform = "";
-        el.style.opacity = "";
-        el.style.filter = "";
-        el.style.letterSpacing = "";
-        el.style.textShadow = "";
+  useEffect(() => {
+    function animate() {
+      const container = containerRef.current;
+      if (!container) {
+        rafRef.current = requestAnimationFrame(animate);
         return;
       }
+      const rect = container.getBoundingClientRect();
+      const { x: mx, y: my, active } = mouseRef.current;
 
-      const dy = my - lineCenterY;
-      const dx = mx - lineCenterX;
-      const dist = Math.sqrt(dy * dy + dx * dx * 0.15);
-      const p = Math.max(0, 1 - dist / INFLUENCE_RADIUS);
-      const p2 = p * p; // quadratic for snappier falloff
+      lineRefs.current.forEach((el, i) => {
+        if (!el) return;
+        const lineCenterY = rect.top + i * LINE_HEIGHT + LINE_HEIGHT / 2;
+        const lineCenterX = rect.left + rect.width / 2;
 
-      // Push lines away from cursor on Y axis, attract on X
-      const pushY = dy > 0 ? -p2 * 8 : p2 * 8;
-      const pullX = p2 * 30 * Math.sign(dx);
+        if (!active) {
+          el.style.transform = "";
+          el.style.opacity = "";
+          el.style.filter = "";
+          el.style.letterSpacing = "";
+          el.style.textShadow = "";
+          return;
+        }
 
-      el.style.transform = `translateX(${pullX}px) translateY(${pushY}px) scale(${1 + p2 * 0.08}) skewX(${p2 * -2 * Math.sign(dx)}deg)`;
-      el.style.opacity = `${0.25 + p * 0.75}`;
-      el.style.letterSpacing = `${p2 * 3}px`;
-      el.style.filter = p > 0.1 ? `brightness(${1 + p2 * 0.6})` : "";
+        const dy = my - lineCenterY;
+        const dx = mx - lineCenterX;
+        const dist = Math.sqrt(dy * dy + dx * dx * 0.15);
+        const p = Math.max(0, 1 - dist / INFLUENCE_RADIUS);
+        const p2 = p * p; // quadratic for snappier falloff
 
-      if (p2 > 0.15) {
-        const violet = Math.round(167 + p2 * 88);
-        const blue = Math.round(139 + p2 * 116);
-        el.style.textShadow = `0 0 ${p2 * 30}px rgba(${violet}, ${blue}, 250, ${p2 * 0.7})`;
-      } else {
-        el.style.textShadow = "";
-      }
-    });
+        // Push lines away from cursor on Y axis, attract on X
+        const pushY = dy > 0 ? -p2 * 8 : p2 * 8;
+        const pullX = p2 * 30 * Math.sign(dx);
 
-    rafRef.current = requestAnimationFrame(animate);
-  }, []);
+        el.style.transform = `translateX(${pullX}px) translateY(${pushY}px) scale(${1 + p2 * 0.08}) skewX(${p2 * -2 * Math.sign(dx)}deg)`;
+        el.style.opacity = `${0.25 + p * 0.75}`;
+        el.style.letterSpacing = `${p2 * 3}px`;
+        el.style.filter = p > 0.1 ? `brightness(${1 + p2 * 0.6})` : "";
 
-  useEffect(() => {
+        if (p2 > 0.15) {
+          const violet = Math.round(167 + p2 * 88);
+          const blue = Math.round(139 + p2 * 116);
+          el.style.textShadow = `0 0 ${p2 * 30}px rgba(${violet}, ${blue}, 250, ${p2 * 0.7})`;
+        } else {
+          el.style.textShadow = "";
+        }
+      });
+
+      rafRef.current = requestAnimationFrame(animate);
+    }
+
     rafRef.current = requestAnimationFrame(animate);
     return () => cancelAnimationFrame(rafRef.current);
-  }, [animate]);
+  }, []);
 
   const handleMouseMove = useCallback((e: React.MouseEvent) => {
     mouseRef.current = { x: e.clientX, y: e.clientY, active: true };

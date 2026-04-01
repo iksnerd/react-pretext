@@ -21,6 +21,8 @@ export function useContainerWidth(
     });
     observer.observe(el);
     return () => observer.disconnect();
+    // ref is a stable RefObject — intentionally omitted from deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   return width;
 }
@@ -30,10 +32,9 @@ export function usePreparedText(
   font: FontSpec,
   options?: PrepareOptions
 ): PreparedTextWithSegments {
-  return useMemo(
-    () => prepareWithSegments(text, font, options),
-    [text, font, options?.whiteSpace]
-  );
+  // Intentionally watching only options.whiteSpace — other PrepareOptions fields don't affect layout
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  return useMemo(() => prepareWithSegments(text, font, options), [text, font, options?.whiteSpace]);
 }
 
 export function useTextLayout(
