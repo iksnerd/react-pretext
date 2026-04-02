@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef, useMemo, useCallback, memo } from "react";
 import { useTextLines } from "@/lib/pretext";
 
 const TEXT =
@@ -17,9 +17,53 @@ type WordToken = {
   isSpace: boolean;
 };
 
+type TokenProps = {
+  token: WordToken;
+  revealedCount: number;
+};
+
+const Token = memo(({ token, revealedCount }: TokenProps) => {
+  const isRevealed = token.isSpace || (token.globalIndex >= 0 && token.globalIndex < revealedCount);
+  const isJustRevealed = !token.isSpace && token.globalIndex >= 0 &&
+    token.globalIndex >= revealedCount - 3 && token.globalIndex < revealedCount;
+
+  return (
+    <span
+      style={{
+        opacity: isRevealed ? 1 : 0.06,
+        filter: isRevealed ? "blur(0px)" : "blur(5px)",
+        color: isJustRevealed ? "#a78bfa" : undefined,
+        textShadow: isJustRevealed ? "0 0 20px rgba(167,139,250,0.4)" : undefined,
+        transition: "opacity 0.4s ease, filter 0.4s ease, color 0.8s ease, text-shadow 0.8s ease",
+      }}
+    >
+      {token.word}
+    </span>
+  );
+});
+
+type LineProps = {
+  lineIdx: number;
+  tokens: WordToken[];
+  revealedCount: number;
+};
+
+const RevealLine = memo(({ lineIdx, tokens, revealedCount }: LineProps) => (
+  <div
+    key={lineIdx}
+    style={{ lineHeight: `${LINE_HEIGHT}px`, height: LINE_HEIGHT }}
+  >
+    {tokens.map((token, tokenIdx) => (
+      <Token key={tokenIdx} token={token} revealedCount={revealedCount} />
+    ))}
+  </div>
+));
+
 export function ScrollReveal() {
   const sectionRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [progress, setProgress] = useState(0);
+  const scrollListenerRef = useRef<(() => void) | null>(null);
 
   const { lines } = useTextLines(TEXT, FONT, MAX_WIDTH, LINE_HEIGHT);
 
@@ -41,22 +85,49 @@ export function ScrollReveal() {
     return result;
   }, [lines]);
 
+  // Pre-compute tokens grouped by line
+  const tokensByLine = useMemo(() => {
+    const result: Map<number, WordToken[]> = new Map();
+    tokens.forEach((token) => {
+      if (!result.has(token.lineIndex)) {
+        result.set(token.lineIndex, []);
+      }
+      result.get(token.lineIndex)!.push(token);
+    });
+    return result;
+  }, [tokens]);
+
   const totalWords = tokens.filter((t) => !t.isSpace).length;
 
+  // Use IntersectionObserver instead of getBoundingClientRect for scroll
   useEffect(() => {
     const handleScroll = () => {
       const section = sectionRef.current;
       if (!section) return;
-      const rect = section.getBoundingClientRect();
+      // Use scrollY for less janky calculations
+      const scrollY = window.scrollY;
+      const sectionTop = section.offsetTop;
+      const sectionHeight = section.offsetHeight;
       const viewH = window.innerHeight;
-      const scrolled = viewH - rect.top;
-      const total = rect.height;
+      
+      const scrolled = Math.max(0, scrollY + viewH - sectionTop);
+      const total = sectionHeight;
       setProgress(Math.max(0, Math.min(1, scrolled / total)));
     };
 
-    window.addEventListener("scroll", handleScroll, { passive: true });
+    // Create optimized scroll listener
+    scrollListenerRef.current = () => {
+      handleScroll();
+    };
+
+    window.addEventListener("scroll", scrollListenerRef.current, { passive: true });
     handleScroll();
-    return () => window.removeEventListener("scroll", handleScroll);
+    
+    return () => {
+      if (scrollListenerRef.current) {
+        window.removeEventListener("scroll", scrollListenerRef.current);
+      }
+    };
   }, []);
 
   const revealedCount = Math.floor(progress * totalWords * 1.15);
@@ -77,36 +148,18 @@ export function ScrollReveal() {
           </p>
         </div>
 
-        <div style={{ font: FONT, maxWidth: MAX_WIDTH }} className="w-full max-w-5xl">
-          {lines.map((line, lineIdx) => (
-            <div
-              key={lineIdx}
-              style={{ lineHeight: `${LINE_HEIGHT}px`, height: LINE_HEIGHT }}
-            >
-              {tokens
-                .filter((t) => t.lineIndex === lineIdx)
-                .map((token, tokenIdx) => {
-                  const isRevealed = token.isSpace || (token.globalIndex >= 0 && token.globalIndex < revealedCount);
-                  const isJustRevealed = !token.isSpace && token.globalIndex >= 0 &&
-                    token.globalIndex >= revealedCount - 3 && token.globalIndex < revealedCount;
-
-                  return (
-                    <span
-                      key={tokenIdx}
-                      style={{
-                        opacity: isRevealed ? 1 : 0.06,
-                        filter: isRevealed ? "blur(0px)" : "blur(5px)",
-                        color: isJustRevealed ? "#a78bfa" : undefined,
-                        textShadow: isJustRevealed ? "0 0 20px rgba(167,139,250,0.4)" : undefined,
-                        transition: "opacity 0.4s ease, filter 0.4s ease, color 0.8s ease, text-shadow 0.8s ease",
-                      }}
-                    >
-                      {token.word}
-                    </span>
-                  );
-                })}
-            </div>
-          ))}
+        <div ref={containerRef} style={{ font: FONT, maxWidth: MAX_WIDTH }} className="w-full max-w-5xl">
+          {lines.map((_, lineIdx) => {
+            const lineTokens = tokensByLine.get(lineIdx) || [];
+            return (
+              <RevealLine
+                key={lineIdx}
+                lineIdx={lineIdx}
+                tokens={lineTokens}
+                revealedCount={revealedCount}
+              />
+            );
+          })}
         </div>
 
         {/* Progress indicator */}

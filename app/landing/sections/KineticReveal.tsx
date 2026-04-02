@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, memo } from "react";
 import { useTextLines } from "@/lib/pretext";
 import { SectionWrapper } from "../components/SectionWrapper";
 
@@ -9,6 +9,51 @@ const TEXT =
 
 const FONT = "30px sans-serif";
 const LINE_HEIGHT = 46;
+
+type RevealLineProps = {
+  line: string;
+  index: number;
+  isVisible: boolean;
+};
+
+const RevealLine = memo(({ line, index, isVisible }: RevealLineProps) => {
+  const fromRight = index % 2 === 1;
+  const xOffset = fromRight ? 60 : -60;
+  const opacity = isVisible ? 0.9 - index * 0.08 : 0;
+
+  return (
+    <div
+      style={{
+        position: "absolute",
+        top: index * LINE_HEIGHT,
+        left: 0,
+        right: 0,
+        lineHeight: `${LINE_HEIGHT}px`,
+        opacity: isVisible ? 1 : 0,
+        transform: isVisible
+          ? "translateY(0) translateX(0) scale(1) rotate(0deg)"
+          : `translateY(40px) translateX(${xOffset}px) scale(0.95) rotate(${fromRight ? 1.5 : -1.5}deg)`,
+        filter: isVisible ? "blur(0px)" : "blur(6px)",
+        transition: `all 0.9s cubic-bezier(0.16, 1, 0.3, 1)`,
+        transitionDelay: `${index * 0.1}s`,
+      }}
+    >
+      <span
+        style={{
+          background: isVisible
+            ? `linear-gradient(90deg, rgba(167,139,250,${opacity}) 0%, rgba(56,189,248,${opacity}) 100%)`
+            : "none",
+          WebkitBackgroundClip: isVisible ? "text" : undefined,
+          WebkitTextFillColor: isVisible && index < 3 ? "transparent" : undefined,
+          transition: "all 1.2s ease",
+          transitionDelay: `${index * 0.1 + 0.3}s`,
+        }}
+      >
+        {line}
+      </span>
+    </div>
+  );
+});
 
 export function KineticReveal() {
   const containerRef = useRef<HTMLDivElement>(null);
@@ -52,43 +97,14 @@ export function KineticReveal() {
         style={{ height: height || undefined, font: FONT }}
       >
         {width > 0 &&
-          lines.map((line, i) => {
-            // Alternate direction: even lines from left, odd from right
-            const fromRight = i % 2 === 1;
-            const xOffset = fromRight ? 60 : -60;
-
-            return (
-              <div
-                key={i}
-                className="absolute left-0 right-0"
-                style={{
-                  top: i * LINE_HEIGHT,
-                  lineHeight: `${LINE_HEIGHT}px`,
-                  opacity: isVisible ? 1 : 0,
-                  transform: isVisible
-                    ? "translateY(0) translateX(0) scale(1) rotate(0deg)"
-                    : `translateY(40px) translateX(${xOffset}px) scale(0.95) rotate(${fromRight ? 1.5 : -1.5}deg)`,
-                  filter: isVisible ? "blur(0px)" : "blur(6px)",
-                  transition: `all 0.9s cubic-bezier(0.16, 1, 0.3, 1)`,
-                  transitionDelay: `${i * 0.1}s`,
-                }}
-              >
-                <span
-                  style={{
-                    background: isVisible
-                      ? `linear-gradient(90deg, rgba(167,139,250,${0.9 - i * 0.08}) 0%, rgba(56,189,248,${0.9 - i * 0.08}) 100%)`
-                      : "none",
-                    WebkitBackgroundClip: isVisible ? "text" : undefined,
-                    WebkitTextFillColor: isVisible && i < 3 ? "transparent" : undefined,
-                    transition: "all 1.2s ease",
-                    transitionDelay: `${i * 0.1 + 0.3}s`,
-                  }}
-                >
-                  {line.text}
-                </span>
-              </div>
-            );
-          })}
+          lines.map((line, i) => (
+            <RevealLine
+              key={i}
+              line={line.text}
+              index={i}
+              isVisible={isVisible}
+            />
+          ))}
       </div>
     </SectionWrapper>
   );

@@ -42,8 +42,11 @@ export function SplitScreen() {
   const handlePointerMove = useCallback(
     (e: React.PointerEvent) => {
       if (!isDragging || !containerRef.current) return;
-      const rect = containerRef.current.getBoundingClientRect();
-      const ratio = (e.clientX - rect.left) / rect.width;
+      const container = containerRef.current;
+      // Use offsetLeft and offsetWidth to avoid getBoundingClientRect reflow
+      const left = container.offsetLeft;
+      const width = container.offsetWidth;
+      const ratio = (e.clientX - left) / width;
       setDividerRatio(Math.max(0.15, Math.min(0.85, ratio)));
     },
     [isDragging]

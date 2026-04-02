@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useState, useCallback, useEffect, type ReactNode } from "react";
+import { useRef, useState, useCallback, useEffect, useMemo, memo, type ReactNode } from "react";
 import { useContainerWidth, useTextLines } from "./hooks";
 import type { FontSpec, LineInfo } from "./types";
 import type { PrepareOptions } from "@chenglou/pretext";
@@ -17,6 +17,27 @@ type VirtualTextProps = {
   className?: string;
   onVisibleRangeChange?: (start: number, end: number, total: number) => void;
 };
+
+type VirtualLineProps = {
+  lineInfo: LineInfo;
+  renderLine?: (info: LineInfo) => ReactNode;
+  lineHeight: number;
+};
+
+const VirtualLine = memo(function VirtualLine({
+  lineInfo,
+  renderLine,
+  lineHeight,
+}: VirtualLineProps) {
+  if (renderLine) return <div>{renderLine(lineInfo)}</div>;
+  return (
+    <div
+      style={{ lineHeight: `${lineHeight}px`, height: lineHeight }}
+    >
+      {lineInfo.text}
+    </div>
+  );
+});
 
 export function VirtualText({
   text,
@@ -42,39 +63,36 @@ export function VirtualText({
   );
   const [scrollTop, setScrollTop] = useState(0);
 
-  const handleScroll = useCallback(
-    (e: React.UIEvent<HTMLDivElement>) => {
-      const top = e.currentTarget.scrollTop;
-      setScrollTop(top);
-      if (onVisibleRangeChange && lines.length > 0) {
-        const start = Math.floor(top / lineHeight);
-        const end = Math.min(
-          Math.ceil((top + viewportHeight) / lineHeight),
-          lines.length
-        );
-        onVisibleRangeChange(start, end, lines.length);
-      }
-    },
-    [lineHeight, viewportHeight, lines.length, onVisibleRangeChange]
-  );
+  const handleScroll = useCallback((e: React.UIEvent<HTMLDivElement>) => {
+    setScrollTop(e.currentTarget.scrollTop);
+  }, []);
 
+  // Memoize visible range calculation to avoid unnecessary updates
+  const visibleRange = useMemo(() => {
+    if (lines.length === 0) return { start: 0, end: 0 };
+    const start = Math.floor(scrollTop / lineHeight);
+    const end = Math.min(
+      Math.ceil((scrollTop + viewportHeight) / lineHeight),
+      lines.length
+    );
+    return { start, end };
+  }, [scrollTop, lineHeight, viewportHeight, lines.length]);
+
+  // Call onVisibleRangeChange only when the visible range actually changes
   useEffect(() => {
     if (onVisibleRangeChange && lines.length > 0) {
-      const start = Math.floor(scrollTop / lineHeight);
-      const end = Math.min(
-        Math.ceil((scrollTop + viewportHeight) / lineHeight),
-        lines.length
-      );
-      onVisibleRangeChange(start, end, lines.length);
+      onVisibleRangeChange(visibleRange.start, visibleRange.end, lines.length);
     }
-  }, [lines.length, scrollTop, lineHeight, viewportHeight, onVisibleRangeChange]);
+  }, [visibleRange.start, visibleRange.end, lines.length, onVisibleRangeChange]);
 
-  const startIdx = Math.max(0, Math.floor(scrollTop / lineHeight) - overscan);
-  const endIdx = Math.min(
-    lines.length,
-    Math.ceil((scrollTop + viewportHeight) / lineHeight) + overscan
-  );
+  const startIdx = Math.max(0, visibleRange.start - overscan);
+  const endIdx = Math.min(lines.length, visibleRange.end + overscan);
   const offsetY = startIdx * lineHeight;
+
+  const visibleLines = useMemo(
+    () => lines.slice(startIdx, endIdx),
+    [lines, startIdx, endIdx]
+  );
 
   return (
     <div
@@ -93,7 +111,7 @@ export function VirtualText({
           }}
         >
           {width > 0 &&
-            lines.slice(startIdx, endIdx).map((line, i) => {
+            visibleLines.map((line, i) => {
               const idx = startIdx + i;
               const info: LineInfo = {
                 text: line.text,
@@ -102,14 +120,13 @@ export function VirtualText({
                 isFirst: idx === 0,
                 isLast: idx === lines.length - 1,
               };
-              if (renderLine) return <div key={idx}>{renderLine(info)}</div>;
               return (
-                <div
+                <VirtualLine
                   key={idx}
-                  style={{ lineHeight: `${lineHeight}px`, height: lineHeight }}
-                >
-                  {line.text}
-                </div>
+                  lineInfo={info}
+                  renderLine={renderLine}
+                  lineHeight={lineHeight}
+                />
               );
             })}
         </div>

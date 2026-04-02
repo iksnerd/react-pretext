@@ -15,6 +15,7 @@ export function MouseReactive() {
   const containerRef = useRef<HTMLDivElement>(null);
   const lineRefs = useRef<(HTMLDivElement | null)[]>([]);
   const mouseRef = useRef({ x: 0, y: 0, active: false });
+  const containerRectRef = useRef({ top: 0, left: 0, width: 0 });
   const rafRef = useRef<number>(0);
   const [width, setWidth] = useState(0);
 
@@ -30,20 +31,41 @@ export function MouseReactive() {
 
   const { lines, height } = useTextLines(TEXT, FONT, width, LINE_HEIGHT);
 
+  // Cache container rect updates when container changes
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+    
+    const updateRect = () => {
+      const rect = container.getBoundingClientRect();
+      containerRectRef.current = { top: rect.top, left: rect.left, width: rect.width };
+    };
+    
+    updateRect();
+    
+    // Update rect on scroll or resize, debounced
+    let rectUpdateTimeout: NodeJS.Timeout;
+    const handleScroll = () => {
+      clearTimeout(rectUpdateTimeout);
+      rectUpdateTimeout = setTimeout(updateRect, 50);
+    };
+    
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener("scroll", handleScroll);
+      clearTimeout(rectUpdateTimeout);
+    };
+  }, []);
+
   useEffect(() => {
     function animate() {
-      const container = containerRef.current;
-      if (!container) {
-        rafRef.current = requestAnimationFrame(animate);
-        return;
-      }
-      const rect = container.getBoundingClientRect();
       const { x: mx, y: my, active } = mouseRef.current;
+      const { top: rectTop, left: rectLeft, width: rectWidth } = containerRectRef.current;
 
       lineRefs.current.forEach((el, i) => {
         if (!el) return;
-        const lineCenterY = rect.top + i * LINE_HEIGHT + LINE_HEIGHT / 2;
-        const lineCenterX = rect.left + rect.width / 2;
+        const lineCenterY = rectTop + i * LINE_HEIGHT + LINE_HEIGHT / 2;
+        const lineCenterX = rectLeft + rectWidth / 2;
 
         if (!active) {
           el.style.transform = "";
