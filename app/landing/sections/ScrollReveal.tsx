@@ -101,32 +101,44 @@ export function ScrollReveal() {
 
   // Use IntersectionObserver instead of getBoundingClientRect for scroll
   useEffect(() => {
+    const section = sectionRef.current;
+    if (!section) return;
+
+    let rafId: number | null = null;
+    let lastProgress = 0;
+
     const handleScroll = () => {
-      const section = sectionRef.current;
-      if (!section) return;
-      // Use scrollY for less janky calculations
-      const scrollY = window.scrollY;
-      const sectionTop = section.offsetTop;
-      const sectionHeight = section.offsetHeight;
-      const viewH = window.innerHeight;
+      if (rafId !== null) cancelAnimationFrame(rafId);
       
-      const scrolled = Math.max(0, scrollY + viewH - sectionTop);
-      const total = sectionHeight;
-      setProgress(Math.max(0, Math.min(1, scrolled / total)));
+      rafId = requestAnimationFrame(() => {
+        if (!sectionRef.current) return;
+        
+        const scrollY = window.scrollY;
+        const sectionTop = section.offsetTop;
+        const sectionHeight = section.offsetHeight;
+        const viewH = window.innerHeight;
+        
+        const scrolled = Math.max(0, scrollY + viewH - sectionTop);
+        const total = sectionHeight;
+        const newProgress = Math.max(0, Math.min(1, scrolled / total));
+        
+        // Only update if progress changed significantly
+        if (Math.abs(newProgress - lastProgress) > 0.001) {
+          lastProgress = newProgress;
+          setProgress(newProgress);
+        }
+        
+        rafId = null;
+      });
     };
 
-    // Create optimized scroll listener
-    scrollListenerRef.current = () => {
-      handleScroll();
-    };
-
-    window.addEventListener("scroll", scrollListenerRef.current, { passive: true });
+    scrollListenerRef.current = handleScroll;
+    window.addEventListener("scroll", handleScroll, { passive: true });
     handleScroll();
     
     return () => {
-      if (scrollListenerRef.current) {
-        window.removeEventListener("scroll", scrollListenerRef.current);
-      }
+      window.removeEventListener("scroll", handleScroll);
+      if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
 
