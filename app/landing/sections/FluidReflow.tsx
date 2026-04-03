@@ -18,13 +18,16 @@ export function FluidReflow() {
   const [currentWidth, setCurrentWidth] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
 
-  // Auto-oscillate
+  // Auto-oscillate disabled to prevent layout shifts affecting scroll calculations
+  // Users can manually control width via buttons instead
+  /* 
   useEffect(() => {
     const interval = setInterval(() => {
       setTargetWidth((w) => (w === MAX_WIDTH ? MIN_WIDTH : MAX_WIDTH));
     }, 3000);
     return () => clearInterval(interval);
   }, []);
+  */
 
   useEffect(() => {
     const el = containerRef.current;

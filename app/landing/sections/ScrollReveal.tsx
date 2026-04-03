@@ -134,10 +134,18 @@ export function ScrollReveal() {
 
     scrollListenerRef.current = handleScroll;
     window.addEventListener("scroll", handleScroll, { passive: true });
+    
+    // Also handle layout changes (e.g., from other sections animating)
+    const handleResize = () => {
+      handleScroll();
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
+    
     handleScroll();
     
     return () => {
       window.removeEventListener("scroll", handleScroll);
+      window.removeEventListener("resize", handleResize);
       if (rafId !== null) cancelAnimationFrame(rafId);
     };
   }, []);
