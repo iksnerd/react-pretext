@@ -38,6 +38,7 @@ const Character = memo(({ char, index, isScattered }: CharProps) => {
     </span>
   );
 });
+Character.displayName = "Character";
 
 export function CharacterScatter() {
   const containerRef = useRef<HTMLDivElement>(null);

@@ -39,6 +39,7 @@ const RevealLine = memo(({ line, index, isVisible }: RevealLineProps) => {
     </div>
   );
 });
+RevealLine.displayName = "RevealLine";
 
 export function FadeStack() {
   const containerRef = useRef<HTMLDivElement>(null);

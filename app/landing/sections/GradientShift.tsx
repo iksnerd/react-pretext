@@ -1,8 +1,7 @@
 "use client";
 
-import { useState, useEffect, useRef, useMemo } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useTextLines } from "@/lib/pretext";
-import { SectionWrapper } from "../components/SectionWrapper";
 
 const TEXT =
   "Watch the color gradient shift across the text as you scroll. The hue follows your scroll position, cycling through the spectrum. It's a visual progress indicator embedded in the text itself — you can literally see how far through the page you've traveled. The gradient slides smoothly, respecting the rhythm of your scroll.";
@@ -65,17 +64,7 @@ export function GradientShift() {
     };
   }, []);
 
-  // Calculate gradient colors based on scroll progress
-  const gradientColors = useMemo(() => {
-    const hue1 = (progress * 360) % 360;
-    const hue2 = (progress * 360 + 120) % 360;
-    const hue3 = (progress * 360 + 240) % 360;
-    return {
-      start: `hsl(${hue1}, 85%, 60%)`,
-      mid: `hsl(${hue2}, 85%, 60%)`,
-      end: `hsl(${hue3}, 85%, 60%)`,
-    };
-  }, [progress]);
+
 
   return (
     <section

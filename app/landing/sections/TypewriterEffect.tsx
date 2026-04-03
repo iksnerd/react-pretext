@@ -42,6 +42,7 @@ const WordToken = memo(({ word, index, revealedCount }: WordTokenProps) => {
     </span>
   );
 });
+WordToken.displayName = "WordToken";
 
 export function TypewriterEffect() {
   const containerRef = useRef<HTMLDivElement>(null);
