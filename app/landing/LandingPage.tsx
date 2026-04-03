@@ -3,7 +3,12 @@
 import { Nav } from "./components/Nav";
 import { KineticReveal } from "./sections/KineticReveal";
 import { MouseReactive } from "./sections/MouseReactive";
+import { TypewriterEffect } from "./sections/TypewriterEffect";
+import { CharacterScatter } from "./sections/CharacterScatter";
 import { FluidReflow } from "./sections/FluidReflow";
+import { GradientShift } from "./sections/GradientShift";
+import { FadeStack } from "./sections/FadeStack";
+import { TextPulse } from "./sections/TextPulse";
 import { CanvasEffects } from "./sections/CanvasEffects";
 import { BalancedHero } from "./sections/BalancedHero";
 import { ShapedText } from "./sections/ShapedText";
@@ -22,7 +27,7 @@ export default function LandingPage() {
             react-pretext
           </h1>
           <p className="text-xl text-zinc-500 mt-4">
-            8 creative text effects powered by DOM-free measurement
+            13 creative text effects powered by DOM-free measurement
           </p>
           <p className="text-sm text-zinc-600 mt-2">
             Built with{" "}
@@ -37,7 +42,12 @@ export default function LandingPage() {
 
       <KineticReveal />
       <MouseReactive />
+      <TypewriterEffect />
+      <CharacterScatter />
       <FluidReflow />
+      <GradientShift />
+      <FadeStack />
+      <TextPulse />
       <CanvasEffects />
       <BalancedHero />
       <ShapedText />

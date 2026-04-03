@@ -5,7 +5,12 @@ import { useState, useEffect } from "react";
 const SECTIONS = [
   { id: "kinetic", label: "Kinetic" },
   { id: "mouse", label: "Mouse" },
+  { id: "typewriter", label: "Typewriter" },
+  { id: "scatter", label: "Scatter" },
   { id: "reflow", label: "Reflow" },
+  { id: "gradient-shift", label: "Gradient" },
+  { id: "fade-stack", label: "Fade" },
+  { id: "pulse", label: "Pulse" },
   { id: "canvas", label: "Canvas" },
   { id: "balanced", label: "Balanced" },
   { id: "shaped", label: "Shaped" },
