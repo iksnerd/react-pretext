@@ -5,7 +5,7 @@ import { useTextLines } from "@/lib/pretext";
 import { SectionWrapper } from "../components/SectionWrapper";
 
 const TEXT =
-  "Words appear one at a time, as if being typed. The cursor blinks at the end of the revealed text. Each word emerges with a slight pop and glow, then settles into place. This creates a deliberate, contemplative pace — letting each word breathe before the next arrives.";
+  "Words appear one at a time, as if being typed. The cursor blinks at the end of the revealed text. Each word emerges with a slight pop and glow, then settles into place. This creates a deliberate, contemplative pace—letting each word breathe before the next arrives.";
 
 const FONT = "28px sans-serif";
 const LINE_HEIGHT = 44;
