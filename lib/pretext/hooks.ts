@@ -4,6 +4,8 @@ import { useMemo, useState, useEffect, type RefObject } from "react";
 import {
   prepareWithSegments,
   layoutWithLines,
+  clearCache,
+  setLocale,
   type PrepareOptions,
   type PreparedTextWithSegments,
 } from "@chenglou/pretext";
@@ -68,4 +70,21 @@ export function useTextLines(
       prepared,
     };
   }, [prepared, maxWidth, lineHeight]);
+}
+
+/**
+ * Clear Pretext's internal canvas measurement cache.
+ * Useful when cycling through many different fonts or text variants.
+ * Automatically called by setTextLocale().
+ */
+export function useClearCache() {
+  return clearCache;
+}
+
+/**
+ * Set the locale for text measurement (affects bidi, segmentation, line-break behavior).
+ * Automatically clears the cache.
+ */
+export function useSetLocale() {
+  return setLocale;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState, useEffect, useMemo } from "react";
-import { prepareWithSegments, layoutWithLines } from "@chenglou/pretext";
+import { prepareWithSegments, layoutWithLines, walkLineRanges } from "@chenglou/pretext";
 import { useTextLines } from "@/lib/pretext";
 import { SectionWrapper } from "../components/SectionWrapper";
 
@@ -13,15 +13,25 @@ const LINE_HEIGHT = 58;
 
 function findBalancedWidth(text: string, font: string, maxWidth: number, lineHeight: number): number {
   const prepared = prepareWithSegments(text, font);
-  const baseline = layoutWithLines(prepared, maxWidth, lineHeight);
-  if (baseline.lineCount <= 1) return maxWidth;
+  
+  // Get baseline line count without building strings
+  let baselineLineCount = 0;
+  walkLineRanges(prepared, maxWidth, () => {
+    baselineLineCount++;
+  });
+  
+  if (baselineLineCount <= 1) return maxWidth;
 
+  // Binary search for narrowest width that maintains baseline line count
   let lo = 0;
   let hi = maxWidth;
   while (hi - lo > 0.5) {
     const mid = (lo + hi) / 2;
-    const test = layoutWithLines(prepared, mid, lineHeight);
-    if (test.lineCount > baseline.lineCount) lo = mid;
+    let testLineCount = 0;
+    walkLineRanges(prepared, mid, () => {
+      testLineCount++;
+    });
+    if (testLineCount > baselineLineCount) lo = mid;
     else hi = mid;
   }
   return Math.ceil(hi);
