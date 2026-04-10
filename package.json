@@ -2,6 +2,25 @@
   "name": "react-pretext",
   "version": "0.1.0",
   "private": true,
+  "description": "DOM-free text measurement playground for React — 13 animated text effects built with CSS and requestAnimationFrame, powered by @chenglou/pretext",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/iksnerd/react-pretext"
+  },
+  "homepage": "https://github.com/iksnerd/react-pretext#readme",
+  "license": "MIT",
+  "keywords": [
+    "react",
+    "nextjs",
+    "text-effects",
+    "css-animations",
+    "typography",
+    "pretext",
+    "text-measurement",
+    "react-hooks",
+    "tailwindcss",
+    "typescript"
+  ],
   "scripts": {
     "dev": "next dev",
     "build": "next build",
